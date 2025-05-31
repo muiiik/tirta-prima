@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tirta Prima - Pemesanan Galon Online (V2.6)</title>
+    <title>Tirta Prima - Pemesanan Galon Online (V2.7)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -227,13 +227,15 @@
         import { getFirestore, collection, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Konfigurasi Aplikasi ---
+        // Objek firebaseConfig di bawah ini akan diperbarui dengan data Anda
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyCT5x--dt2erPxWIhTc2sNKFPctRBNmT9g", 
+            apiKey: "AIzaSyCT5X--dt2erPxWIhTc2sNKFPctRBNmT9g",
             authDomain: "tirtaprima-a38b5.firebaseapp.com",
             projectId: "tirtaprima-a38b5",
-            storageBucket: "tirtaprima-a38b5.firebasestorage.app",
+            storageBucket: "tirtaprima-a38b5.appspot.com", // Sesuai gambar, appspot.com adalah umum
             messagingSenderId: "724817167623",
-            appId: "1:724817167623:web:718a1a593326b7c8de31a2"
+            appId: "1:724817167623:web:718a1a593326b7c8de31a2",
+            measurementId: "G-HX9YQG2WXR" // Ditambahkan dari gambar
         };
         const APP_ID_FALLBACK = 'tirta-prima-online'; 
         const appIdentifier = typeof __app_id !== 'undefined' ? __app_id : APP_ID_FALLBACK;
@@ -555,9 +557,9 @@
                         itemTotal: product ? (product.price * item.quantity) : 0
                     };
                 }),
-                subtotal: subtotalFromCart, // Simpan subtotal produk
-                deliveryFee: finalDeliveryFee, // Simpan biaya antar jemput
-                grandTotal: finalGrandTotal, // Simpan total keseluruhan
+                subtotal: subtotalFromCart, 
+                deliveryFee: finalDeliveryFee, 
+                grandTotal: finalGrandTotal, 
                 orderStatus: "Menunggu Pembayaran Diverifikasi", 
                 createdAt: serverTimestamp(), 
                 sessionId: currentUserId, 
