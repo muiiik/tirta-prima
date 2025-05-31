@@ -1,1 +1,674 @@
 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tirta Prima - Pemesanan Galon Online (V2.6)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f9ff; /* sky-100 */
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .button-primary {
+            background-color: #2563eb; /* blue-600 */
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .button-primary:hover {
+            background-color: #1d4ed8; /* blue-700 */
+        }
+        .button-primary:disabled {
+            background-color: #9ca3af; /* gray-400 */
+            cursor: not-allowed;
+        }
+        .button-secondary {
+            background-color: #e5e7eb; /* gray-200 */
+            color: #374151; /* gray-700 */
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .button-secondary:hover {
+            background-color: #d1d5db; /* gray-300 */
+        }
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .section-hidden {
+            display: none !important;
+        }
+        #loading-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #2563eb;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex; /* Initially hidden, controlled by JS */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            max-width: 450px; 
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-indicator">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="alert-modal" class="modal section-hidden">
+        <div class="modal-content">
+            <p id="alert-message" class="mb-6 text-lg"></p>
+            <button id="close-alert-modal-btn" class="button-primary mx-auto block">Tutup</button>
+        </div>
+    </div>
+
+    <div id="app-container" class="container section-hidden">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-blue-700">Tirta Prima</h1>
+            <p class="text-xl text-gray-600">Pemesanan Galon Online</p>
+            <p class="text-sm text-gray-500 mt-2">ID Sesi: <span id="user-id-display">Memuat...</span></p>
+        </header>
+
+        <section id="products-section" class="card">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-800">Pilih Produk Anda</h2>
+            <div id="product-list-container" class="grid md:grid-cols-2 gap-6">
+                <p id="product-loading-message" class="text-gray-500 col-span-full">Memuat produk...</p>
+            </div>
+        </section>
+
+        <section id="cart-section" class="card">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Keranjang Belanja</h2>
+            <div id="cart-items-container" class="mb-4">
+                <p class="text-gray-500">Keranjang Anda masih kosong.</p>
+            </div>
+            <hr class="my-4">
+            <div class="text-right">
+                <p class="text-md font-semibold text-gray-700">Subtotal Produk: Rp <span id="cart-subtotal-amount">0</span></p>
+                <p class="text-md font-semibold text-gray-700">Biaya Antar Jemput: Rp <span id="cart-delivery-fee">0</span></p>
+                <p class="text-xl font-bold text-gray-800 mt-1">Total Keseluruhan: Rp <span id="cart-grand-total-amount">0</span></p>
+                <button id="checkout-btn" class="button-primary mt-4" disabled>Lanjut ke Checkout</button>
+            </div>
+        </section>
+
+        <section id="checkout-form-section" class="card section-hidden">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-800">Detail Pengiriman & Penjemputan</h2>
+            <form id="customer-details-form">
+                <div class="mb-4">
+                    <label for="customer-name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                    <input type="text" id="customer-name" class="input-field" required>
+                </div>
+                <div class="mb-4">
+                    <label for="customer-delivery-address" class="block text-sm font-medium text-gray-700 mb-1">Alamat Pengantaran Galon</label>
+                    <textarea id="customer-delivery-address" rows="3" class="input-field" required></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="customer-pickup-address" class="block text-sm font-medium text-gray-700 mb-1">Alamat Penjemputan Galon <span class="text-xs text-gray-500">(Kosongkan jika sama dengan alamat pengantaran)</span></label>
+                    <textarea id="customer-pickup-address" rows="3" class="input-field"></textarea>
+                </div>
+                <div class="mb-6">
+                    <label for="customer-phone" class="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon (WhatsApp)</label>
+                    <input type="tel" id="customer-phone" class="input-field" required placeholder="Contoh: 08123456789">
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="back-to-cart-btn" class="button-secondary">Kembali ke Produk</button>
+                    <button type="submit" class="button-primary">Lanjut ke Pembayaran</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="payment-section" class="card section-hidden">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Pembayaran via QRIS</h2>
+            <p class="text-lg mb-3">Total Tagihan Anda (termasuk antar jemput): <strong class="text-blue-600">Rp <span id="payment-total-display">0</span></strong></p>
+            <p class="mb-3 text-gray-700">Silakan pindai kode QRIS di bawah ini menggunakan aplikasi pembayaran favorit Anda.</p>
+            <p class="mb-6 text-gray-700 font-medium">Setelah berhasil, klik tombol "Saya Sudah Bayar" dan kirimkan bukti pembayaran ke <a href="https://wa.me/628122228430" target="_blank" class="text-blue-600 hover:text-blue-800 underline">WhatsApp kami di 08122228430</a>.</p>
+            <div class="flex justify-center mb-6">
+                <img src="https://raw.githubusercontent.com/muiiik/tirta-prima/refs/heads/main/qrcode.png" alt="Kode QRIS Pembayaran Tirta Prima" id="qris-image" class="w-60 h-60 md:w-64 md:h-64 border-2 border-gray-300 rounded-lg shadow-md p-1 bg-white" onerror="this.onerror=null; this.src='https://placehold.co/256x256/e0e0e0/757575?text=QRIS+Error'; this.alt='QRIS Tidak Dapat Dimuat';">
+            </div>
+            <div class="flex justify-center gap-3 mt-6">
+                 <button type="button" id="back-to-details-btn" class="button-secondary">Kembali ke Detail</button>
+                <button id="confirm-payment-btn" class="button-primary">Saya Sudah Bayar</button>
+            </div>
+        </section>
+
+        <section id="order-confirmation-section" class="card section-hidden">
+            <div class="text-center">
+                <svg class="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h2 class="text-2xl font-semibold mb-3 text-green-600">Pesanan Berhasil Diterima!</h2>
+            </div>
+            <p class="text-gray-700 mb-2 text-center">Terima kasih telah memesan dari Depot Air Minum Tirta Prima.</p>
+            <p class="text-gray-700 mb-5 text-center">Nomor Referensi Pesanan Anda: <strong id="order-id-display" class="text-gray-900"></strong></p>
+            
+            <div id="order-summary-details" class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Ringkasan Pesanan:</h3>
+                <p><strong>Nama Pelanggan:</strong> <span id="summary-customer-name"></span></p>
+                <p><strong>Alamat Pengantaran Galon:</strong> <span id="summary-customer-delivery-address"></span></p>
+                <p><strong>Alamat Penjemputan Galon:</strong> <span id="summary-customer-pickup-address"></span></p>
+                <p><strong>Nomor Telepon:</strong> <span id="summary-customer-phone"></span></p>
+                <p class="mt-2"><strong>Subtotal Produk:</strong> Rp <span id="summary-subtotal-amount"></span></p>
+                <p><strong>Biaya Antar Jemput:</strong> Rp <span id="summary-delivery-fee"></span></p>
+                <p class="mt-1 font-bold"><strong>Total Pembayaran:</strong> Rp <span id="summary-grand-total-amount"></span></p>
+                <p class="mt-2"><strong>Barang yang Dipesan:</strong></p>
+                <ul id="summary-items-list" class="list-disc list-inside ml-4 text-gray-600"></ul>
+            </div>
+            <p class="text-gray-600 text-sm text-center">Kami akan segera memproses pesanan Anda setelah menerima konfirmasi pembayaran. Jika ada pertanyaan lebih lanjut, jangan ragu untuk menghubungi kami.</p>
+            <div class="text-center mt-8">
+                <button id="create-new-order-btn" class="button-primary">Buat Pesanan Baru</button>
+            </div>
+        </section>
+
+        <footer class="text-center mt-12 mb-6">
+            <p class="text-sm text-gray-500">&copy; <span id="current-year-display"></span> Depot Tirta Prima. Semua Hak Cipta Dilindungi.</p>
+        </footer>
+    </div>
+
+    <script type="module">
+        // Impor modul Firebase yang diperlukan
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Konfigurasi Aplikasi ---
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "YOUR_API_KEY", 
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        const APP_ID_FALLBACK = 'tirta-prima-online'; 
+        const appIdentifier = typeof __app_id !== 'undefined' ? __app_id : APP_ID_FALLBACK;
+        const DELIVERY_FEE = 1000; // Biaya antar jemput
+
+        // --- Variabel Global Aplikasi ---
+        let firebaseApp, firebaseAuth, firestoreDb, currentUserId;
+        const productCatalog = [ 
+            { id: "P001", name: "Galon Baru + Isi", price: 60000, image: "https://placehold.co/400x300/3498db/ffffff?text=Galon+Baru" },
+            { id: "P002", name: "Isi Ulang Galon", price: 5500, image: "https://placehold.co/400x300/2ecc71/ffffff?text=Isi+Ulang" } 
+        ];
+        let shoppingCart = []; 
+        let orderDetails = {}; 
+
+        // --- Selektor Elemen DOM ---
+        const loadingIndicatorEl = document.getElementById('loading-indicator');
+        const appContainerEl = document.getElementById('app-container');
+        const userIdDisplayEl = document.getElementById('user-id-display');
+        const productListContainerEl = document.getElementById('product-list-container');
+        const productLoadingMessageEl = document.getElementById('product-loading-message');
+        const cartItemsContainerEl = document.getElementById('cart-items-container');
+        const cartSubtotalAmountEl = document.getElementById('cart-subtotal-amount'); 
+        const cartDeliveryFeeEl = document.getElementById('cart-delivery-fee'); 
+        const cartGrandTotalAmountEl = document.getElementById('cart-grand-total-amount'); 
+        const checkoutBtnEl = document.getElementById('checkout-btn');
+        // Sections
+        const productsSectionEl = document.getElementById('products-section');
+        const cartSectionEl = document.getElementById('cart-section');
+        const checkoutFormSectionEl = document.getElementById('checkout-form-section');
+        const paymentSectionEl = document.getElementById('payment-section');
+        const orderConfirmationSectionEl = document.getElementById('order-confirmation-section');
+        // Checkout Form
+        const customerDetailsFormEl = document.getElementById('customer-details-form');
+        const customerNameInputEl = document.getElementById('customer-name');
+        const customerDeliveryAddressInputEl = document.getElementById('customer-delivery-address'); 
+        const customerPickupAddressInputEl = document.getElementById('customer-pickup-address'); 
+        const customerPhoneInputEl = document.getElementById('customer-phone');
+        // Payment
+        const paymentTotalDisplayEl = document.getElementById('payment-total-display');
+        // Order Confirmation
+        const orderIdDisplayEl = document.getElementById('order-id-display');
+        const summaryCustomerNameEl = document.getElementById('summary-customer-name');
+        const summaryCustomerDeliveryAddressEl = document.getElementById('summary-customer-delivery-address'); 
+        const summaryCustomerPickupAddressEl = document.getElementById('summary-customer-pickup-address'); 
+        const summaryCustomerPhoneEl = document.getElementById('summary-customer-phone');
+        const summarySubtotalAmountEl = document.getElementById('summary-subtotal-amount'); 
+        const summaryDeliveryFeeEl = document.getElementById('summary-delivery-fee'); 
+        const summaryGrandTotalAmountEl = document.getElementById('summary-grand-total-amount'); 
+        const summaryItemsListEl = document.getElementById('summary-items-list');
+        // Buttons
+        const backToCartBtnEl = document.getElementById('back-to-cart-btn');
+        const backToDetailsBtnEl = document.getElementById('back-to-details-btn');
+        const confirmPaymentBtnEl = document.getElementById('confirm-payment-btn');
+        const createNewOrderBtnEl = document.getElementById('create-new-order-btn');
+        // Alert Modal
+        const alertModalEl = document.getElementById('alert-modal');
+        const alertMessageEl = document.getElementById('alert-message');
+        const closeAlertModalBtnEl = document.getElementById('close-alert-modal-btn');
+        // Footer
+        const currentYearDisplayEl = document.getElementById('current-year-display');
+
+        // --- Fungsi Utilitas Tampilan ---
+        const showLoading = () => loadingIndicatorEl.classList.remove('section-hidden');
+        const hideLoading = () => loadingIndicatorEl.classList.add('section-hidden');
+
+        function displayAlert(message, type = 'info') { 
+            alertMessageEl.textContent = message;
+            alertModalEl.classList.remove('section-hidden');
+            alertModalEl.style.display = 'flex'; 
+        }
+        const hideAlert = () => {
+            alertModalEl.classList.add('section-hidden');
+            alertModalEl.style.display = 'none';
+        }
+
+        function navigateToSection(sectionId) {
+            [productsSectionEl, cartSectionEl, checkoutFormSectionEl, paymentSectionEl, orderConfirmationSectionEl].forEach(el => el.classList.add('section-hidden'));
+            
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) targetSection.classList.remove('section-hidden');
+
+            if (sectionId !== 'order-confirmation-section') {
+                productsSectionEl.classList.remove('section-hidden');
+                cartSectionEl.classList.remove('section-hidden');
+            }
+             if (sectionId === 'checkout-form-section' || sectionId === 'payment-section') {
+                productsSectionEl.classList.add('section-hidden'); 
+            }
+        }
+
+        // --- Fungsi Render Produk ---
+        function renderProducts() {
+            if (!productListContainerEl) return;
+            productListContainerEl.innerHTML = ''; 
+            if (productLoadingMessageEl) productLoadingMessageEl.classList.add('section-hidden');
+
+            if (productCatalog.length === 0) {
+                productListContainerEl.innerHTML = '<p class="text-gray-600 col-span-full text-center">Tidak ada produk tersedia saat ini.</p>';
+                return;
+            }
+
+            productCatalog.forEach(product => {
+                const cartItem = shoppingCart.find(item => item.productId === product.id);
+                const quantityInCart = cartItem ? cartItem.quantity : 0;
+
+                const productCardHTML = `
+                    <div class="bg-white p-5 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between">
+                        <img src="${product.image}" alt="[Gambar ${product.name}]" class="w-full h-40 object-cover rounded-md mb-4" onerror="this.onerror=null; this.src='https://placehold.co/400x300/cccccc/969696?text=Error+Gambar';">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-1">${product.name}</h3>
+                            <p class="text-blue-600 font-bold text-xl mb-3">Rp ${product.price.toLocaleString('id-ID')}</p>
+                            <div class="flex items-center justify-between mb-3">
+                                <label for="qty-${product.id}" class="text-sm text-gray-600 mr-2">Jumlah:</label>
+                                <div class="flex items-center">
+                                    <button data-product-id="${product.id}" data-action="decrease" class="button-secondary p-1.5 rounded-l-md">-</button>
+                                    <input type="number" id="qty-${product.id}" value="${quantityInCart}" min="0" class="w-12 text-center border-t border-b border-gray-300 p-1.5 appearance-none" readonly>
+                                    <button data-product-id="${product.id}" data-action="increase" class="button-secondary p-1.5 rounded-r-md">+</button>
+                                </div>
+                            </div>
+                            <button data-product-id="${product.id}" class="add-to-cart-btn button-primary w-full text-sm py-2.5 ${quantityInCart > 0 && shoppingCart.some(i => i.productId === product.id) ? 'opacity-50 cursor-not-allowed' : ''}" 
+                                ${quantityInCart > 0 && shoppingCart.some(i => i.productId === product.id) ? 'disabled' : ''}>
+                                ${quantityInCart > 0 && shoppingCart.some(i => i.productId === product.id) ? 'Sudah di Keranjang' : 'Tambah ke Keranjang'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                productListContainerEl.insertAdjacentHTML('beforeend', productCardHTML);
+            });
+            attachProductActionListeners();
+        }
+
+        function attachProductActionListeners() {
+            productListContainerEl.querySelectorAll('[data-action="increase"], [data-action="decrease"]').forEach(button => {
+                button.addEventListener('click', handleQuantityChange);
+            });
+            productListContainerEl.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                button.addEventListener('click', handleAddToCart);
+            });
+        }
+
+        function handleQuantityChange(event) {
+            const productId = event.target.dataset.productId;
+            const action = event.target.dataset.action;
+            const qtyInput = document.getElementById(`qty-${productId}`);
+            let currentQty = parseInt(qtyInput.value);
+
+            if (action === 'increase') {
+                currentQty++;
+            } else if (action === 'decrease' && currentQty > 0) {
+                currentQty--;
+            }
+            qtyInput.value = currentQty;
+            
+            const addToCartBtn = productListContainerEl.querySelector(`.add-to-cart-btn[data-product-id="${productId}"]`);
+            if (addToCartBtn) {
+                 if (currentQty > 0 && !shoppingCart.some(item => item.productId === productId)) {
+                    addToCartBtn.textContent = `Tambah ${currentQty} ke Keranjang`;
+                    addToCartBtn.disabled = false;
+                    addToCartBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else if (currentQty === 0 && !shoppingCart.some(item => item.productId === productId)) {
+                    addToCartBtn.textContent = 'Tambah ke Keranjang';
+                    addToCartBtn.disabled = false;
+                    addToCartBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else if (shoppingCart.some(item => item.productId === productId)) {
+                    updateCart(productId, currentQty); 
+                }
+            }
+        }
+        
+        function handleAddToCart(event) {
+            const productId = event.target.dataset.productId;
+            const qtyInput = document.getElementById(`qty-${productId}`);
+            const quantity = parseInt(qtyInput.value);
+
+            if (quantity > 0) {
+                updateCart(productId, quantity);
+                event.target.textContent = 'Sudah di Keranjang';
+                event.target.disabled = true;
+                event.target.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                displayAlert('Masukkan jumlah produk yang valid (minimal 1).');
+            }
+        }
+
+        // --- Fungsi Keranjang Belanja ---
+        function updateCart(productId, quantity) {
+            const existingItemIndex = shoppingCart.findIndex(item => item.productId === productId);
+            if (quantity > 0) {
+                if (existingItemIndex > -1) {
+                    shoppingCart[existingItemIndex].quantity = quantity;
+                } else {
+                    shoppingCart.push({ productId, quantity });
+                }
+            } else { 
+                if (existingItemIndex > -1) {
+                    shoppingCart.splice(existingItemIndex, 1);
+                }
+                const addToCartBtn = productListContainerEl.querySelector(`.add-to-cart-btn[data-product-id="${productId}"]`);
+                const qtyInput = document.getElementById(`qty-${productId}`); 
+                if (addToCartBtn) {
+                    addToCartBtn.textContent = 'Tambah ke Keranjang';
+                    addToCartBtn.disabled = false;
+                    addToCartBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                if (qtyInput) { 
+                    qtyInput.value = 0;
+                }
+            }
+            updateCartDisplay();
+            if (quantity === 0 && productListContainerEl) renderProducts(); 
+        }
+
+        function updateCartDisplay() {
+            if (!cartItemsContainerEl || !cartSubtotalAmountEl || !cartDeliveryFeeEl || !cartGrandTotalAmountEl || !checkoutBtnEl) return;
+
+            if (shoppingCart.length === 0) {
+                cartItemsContainerEl.innerHTML = '<p class="text-gray-500">Keranjang Anda masih kosong.</p>';
+                cartSubtotalAmountEl.textContent = '0';
+                cartDeliveryFeeEl.textContent = '0';
+                cartGrandTotalAmountEl.textContent = '0';
+                checkoutBtnEl.disabled = true;
+                return;
+            }
+
+            cartItemsContainerEl.innerHTML = '';
+            let subtotalAmount = 0;
+            shoppingCart.forEach(cartItem => {
+                const product = productCatalog.find(p => p.id === cartItem.productId);
+                if (product) {
+                    const itemTotal = product.price * cartItem.quantity;
+                    subtotalAmount += itemTotal;
+                    const cartItemHTML = `
+                        <div class="flex justify-between items-center border-b border-gray-200 py-3">
+                            <div>
+                                <p class="font-medium text-gray-700">${product.name}</p>
+                                <p class="text-sm text-gray-500">Rp ${product.price.toLocaleString('id-ID')} x ${cartItem.quantity}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="font-semibold text-gray-800">Rp ${itemTotal.toLocaleString('id-ID')}</span>
+                                <button data-product-id="${product.id}" class="remove-from-cart-btn text-red-500 hover:text-red-700 text-xs font-semibold">HAPUS</button>
+                            </div>
+                        </div>
+                    `;
+                    cartItemsContainerEl.insertAdjacentHTML('beforeend', cartItemHTML);
+                }
+            });
+
+            const currentDeliveryFee = shoppingCart.length > 0 ? DELIVERY_FEE : 0;
+            const grandTotalAmount = subtotalAmount + currentDeliveryFee;
+
+            cartSubtotalAmountEl.textContent = subtotalAmount.toLocaleString('id-ID');
+            cartDeliveryFeeEl.textContent = currentDeliveryFee.toLocaleString('id-ID');
+            cartGrandTotalAmountEl.textContent = grandTotalAmount.toLocaleString('id-ID');
+            checkoutBtnEl.disabled = false;
+
+            cartItemsContainerEl.querySelectorAll('.remove-from-cart-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const productIdToRemove = event.target.dataset.productId;
+                    updateCart(productIdToRemove, 0); 
+                });
+            });
+        }
+
+        // --- Fungsi Proses Checkout ---
+        function proceedToCustomerDetails() {
+            if (shoppingCart.length === 0) {
+                displayAlert("Keranjang belanja Anda kosong. Silakan pilih produk terlebih dahulu.");
+                return;
+            }
+            navigateToSection('checkout-form-section');
+        }
+
+        customerDetailsFormEl.addEventListener('submit', function(event) {
+            event.preventDefault();
+            orderDetails = {
+                name: customerNameInputEl.value.trim(),
+                deliveryAddress: customerDeliveryAddressInputEl.value.trim(), 
+                pickupAddress: customerPickupAddressInputEl.value.trim(), 
+                phone: customerPhoneInputEl.value.trim()
+            };
+            if (!orderDetails.name || !orderDetails.deliveryAddress || !orderDetails.phone) { 
+                displayAlert("Mohon lengkapi Nama, Alamat Pengantaran, dan Nomor Telepon.");
+                return;
+            }
+            // Ambil grand total dari tampilan keranjang untuk ditampilkan di halaman pembayaran
+            paymentTotalDisplayEl.textContent = cartGrandTotalAmountEl.textContent;
+            navigateToSection('payment-section');
+        });
+
+        async function processPaymentConfirmation() {
+            if (!firestoreDb || !currentUserId) {
+                displayAlert("Koneksi ke server gagal. Tidak dapat menyimpan pesanan saat ini. Mohon coba lagi nanti.", "error");
+                return;
+            }
+            showLoading(); 
+
+            const subtotalFromCart = shoppingCart.reduce((sum, item) => {
+                const product = productCatalog.find(p => p.id === item.productId);
+                return sum + (product ? product.price * item.quantity : 0);
+            }, 0);
+            const finalDeliveryFee = shoppingCart.length > 0 ? DELIVERY_FEE : 0;
+            const finalGrandTotal = subtotalFromCart + finalDeliveryFee;
+
+
+            const orderToSave = {
+                customerInfo: {
+                    name: orderDetails.name,
+                    deliveryAddress: orderDetails.deliveryAddress,
+                    pickupAddress: orderDetails.pickupAddress || 'Sama dengan alamat pengantaran', 
+                    phone: orderDetails.phone
+                },
+                items: shoppingCart.map(item => {
+                    const product = productCatalog.find(p => p.id === item.productId);
+                    return { 
+                        productId: item.productId, 
+                        name: product ? product.name : 'Produk Tidak Ditemukan', 
+                        quantity: item.quantity, 
+                        pricePerUnit: product ? product.price : 0,
+                        itemTotal: product ? (product.price * item.quantity) : 0
+                    };
+                }),
+                subtotal: subtotalFromCart, // Simpan subtotal produk
+                deliveryFee: finalDeliveryFee, // Simpan biaya antar jemput
+                grandTotal: finalGrandTotal, // Simpan total keseluruhan
+                orderStatus: "Menunggu Pembayaran Diverifikasi", 
+                createdAt: serverTimestamp(), 
+                sessionId: currentUserId, 
+                appInstanceId: appIdentifier 
+            };
+
+            try {
+                const docRef = await addDoc(collection(firestoreDb, `artifacts/${appIdentifier}/public/data/customerOrders`), orderToSave);
+                
+                orderIdDisplayEl.textContent = docRef.id;
+                summaryCustomerNameEl.textContent = orderToSave.customerInfo.name;
+                summaryCustomerDeliveryAddressEl.textContent = orderToSave.customerInfo.deliveryAddress; 
+                summaryCustomerPickupAddressEl.textContent = orderToSave.customerInfo.pickupAddress; 
+                summaryCustomerPhoneEl.textContent = orderToSave.customerInfo.phone;
+                
+                summarySubtotalAmountEl.textContent = orderToSave.subtotal.toLocaleString('id-ID');
+                summaryDeliveryFeeEl.textContent = orderToSave.deliveryFee.toLocaleString('id-ID');
+                summaryGrandTotalAmountEl.textContent = orderToSave.grandTotal.toLocaleString('id-ID');
+                
+                summaryItemsListEl.innerHTML = ''; 
+                orderToSave.items.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${item.name} (x${item.quantity}) - Rp ${item.itemTotal.toLocaleString('id-ID')}`;
+                    summaryItemsListEl.appendChild(listItem);
+                });
+
+                navigateToSection('order-confirmation-section');
+                resetOrderState(); 
+            } catch (error) {
+                console.error("Gagal menyimpan pesanan ke Firestore: ", error);
+                displayAlert("Terjadi kesalahan saat menyimpan pesanan Anda. Mohon coba lagi. Detail: " + error.message, "error");
+            } finally {
+                hideLoading(); 
+            }
+        }
+
+        function resetOrderState() {
+            shoppingCart = [];
+            orderDetails = {};
+            customerDetailsFormEl.reset(); 
+            updateCartDisplay();
+            if (productListContainerEl) renderProducts(); 
+        }
+        
+        // --- Inisialisasi Aplikasi ---
+        async function initializeAppCore() {
+            showLoading();
+            if (currentYearDisplayEl) currentYearDisplayEl.textContent = new Date().getFullYear();
+
+            try {
+                firebaseApp = initializeApp(firebaseConfig);
+                firebaseAuth = getAuth(firebaseApp);
+                firestoreDb = getFirestore(firebaseApp);
+                console.log("Firebase berhasil diinisialisasi.");
+            } catch (error) {
+                console.error("Kesalahan Inisialisasi Firebase:", error);
+                displayAlert("Gagal terhubung ke layanan kami. Mohon muat ulang halaman.", "error");
+                hideLoading();
+                return; 
+            }
+
+            onAuthStateChanged(firebaseAuth, async (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    console.log("Pengguna terautentikasi (UID):", currentUserId);
+                } else {
+                    console.log("Tidak ada pengguna aktif, mencoba sign-in anonim.");
+                    try {
+                        const userCredential = await signInAnonymously(firebaseAuth);
+                        currentUserId = userCredential.user.uid;
+                        console.log("Sign-in anonim berhasil (UID):", currentUserId);
+                    } catch (anonError) {
+                        console.error("Kesalahan sign-in anonim:", anonError);
+                        displayAlert("Gagal memulai sesi aman. Beberapa fitur mungkin terbatas.", "error");
+                        currentUserId = `error-session-${crypto.randomUUID()}`; 
+                    }
+                }
+                
+                if (userIdDisplayEl) userIdDisplayEl.textContent = currentUserId;
+                
+                renderProducts();
+                updateCartDisplay();
+                navigateToSection('products-section'); 
+                appContainerEl.classList.remove('section-hidden'); 
+                hideLoading(); 
+            });
+
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                try {
+                    console.log("Mencoba sign-in dengan token kustom...");
+                    await signInWithCustomToken(firebaseAuth, __initial_auth_token);
+                } catch (customTokenError) {
+                    console.error("Gagal sign-in dengan token kustom:", customTokenError);
+                }
+            }
+        }
+
+        // --- Event Listeners Utama ---
+        document.addEventListener('DOMContentLoaded', initializeAppCore);
+
+        checkoutBtnEl.addEventListener('click', proceedToCustomerDetails);
+        backToCartBtnEl.addEventListener('click', () => navigateToSection('products-section'));
+        backToDetailsBtnEl.addEventListener('click', () => navigateToSection('checkout-form-section'));
+        confirmPaymentBtnEl.addEventListener('click', processPaymentConfirmation);
+        createNewOrderBtnEl.addEventListener('click', () => {
+            resetOrderState(); 
+            navigateToSection('products-section');
+        });
+        closeAlertModalBtnEl.addEventListener('click', hideAlert);
+
+    </script>
+</body>
+</html>
