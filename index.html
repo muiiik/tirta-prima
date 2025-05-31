@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tirta Prima - Pemesanan Galon Online (V2.7)</title>
+    <title>Tirta Prima - Pemesanan Galon Online (V2.9)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -125,6 +125,7 @@
         <header class="text-center mb-8">
             <h1 class="text-4xl font-bold text-blue-700">Tirta Prima</h1>
             <p class="text-xl text-gray-600">Pemesanan Galon Online</p>
+            <p class="text-sm text-gray-500 mt-1">Jl. Delima Raya, Perumnas Jl. Raya Belimbing No.11, Kuranji, Kec. Kuranji, Kota Padang, Sumatera Barat 25170</p>
             <p class="text-sm text-gray-500 mt-2">ID Sesi: <span id="user-id-display">Memuat...</span></p>
         </header>
 
@@ -142,9 +143,7 @@
             </div>
             <hr class="my-4">
             <div class="text-right">
-                <p class="text-md font-semibold text-gray-700">Subtotal Produk: Rp <span id="cart-subtotal-amount">0</span></p>
-                <p class="text-md font-semibold text-gray-700">Biaya Antar Jemput: Rp <span id="cart-delivery-fee">0</span></p>
-                <p class="text-xl font-bold text-gray-800 mt-1">Total Keseluruhan: Rp <span id="cart-grand-total-amount">0</span></p>
+                <p class="text-xl font-bold text-gray-800 mt-1">Total Pesanan: Rp <span id="cart-grand-total-amount">0</span></p>
                 <button id="checkout-btn" class="button-primary mt-4" disabled>Lanjut ke Checkout</button>
             </div>
         </section>
@@ -177,9 +176,9 @@
 
         <section id="payment-section" class="card section-hidden">
             <h2 class="text-2xl font-semibold mb-4 text-gray-800">Pembayaran via QRIS</h2>
-            <p class="text-lg mb-3">Total Tagihan Anda (termasuk antar jemput): <strong class="text-blue-600">Rp <span id="payment-total-display">0</span></strong></p>
+            <p class="text-lg mb-3">Total Tagihan Anda: <strong class="text-blue-600">Rp <span id="payment-total-display">0</span></strong></p>
             <p class="mb-3 text-gray-700">Silakan pindai kode QRIS di bawah ini menggunakan aplikasi pembayaran favorit Anda.</p>
-            <p class="mb-6 text-gray-700 font-medium">Setelah berhasil, klik tombol "Saya Sudah Bayar" dan kirimkan bukti pembayaran ke <a href="https://wa.me/628122228430" target="_blank" class="text-blue-600 hover:text-blue-800 underline">WhatsApp kami di 08122228430</a>.</p>
+            <p class="mb-6 text-gray-700 font-medium">Setelah berhasil, klik tombol "Saya Sudah Bayar" dan kirimkan bukti pembayaran ke <a href="https://wa.me/6285374725322" target="_blank" class="text-blue-600 hover:text-blue-800 underline">WhatsApp kami di 085374725322</a>.</p>
             <div class="flex justify-center mb-6">
                 <img src="https://raw.githubusercontent.com/muiiik/tirta-prima/refs/heads/main/qrcode.png" alt="Kode QRIS Pembayaran Tirta Prima" id="qris-image" class="w-60 h-60 md:w-64 md:h-64 border-2 border-gray-300 rounded-lg shadow-md p-1 bg-white" onerror="this.onerror=null; this.src='https://placehold.co/256x256/e0e0e0/757575?text=QRIS+Error'; this.alt='QRIS Tidak Dapat Dimuat';">
             </div>
@@ -203,8 +202,6 @@
                 <p><strong>Alamat Pengantaran Galon:</strong> <span id="summary-customer-delivery-address"></span></p>
                 <p><strong>Alamat Penjemputan Galon:</strong> <span id="summary-customer-pickup-address"></span></p>
                 <p><strong>Nomor Telepon:</strong> <span id="summary-customer-phone"></span></p>
-                <p class="mt-2"><strong>Subtotal Produk:</strong> Rp <span id="summary-subtotal-amount"></span></p>
-                <p><strong>Biaya Antar Jemput:</strong> Rp <span id="summary-delivery-fee"></span></p>
                 <p class="mt-1 font-bold"><strong>Total Pembayaran:</strong> Rp <span id="summary-grand-total-amount"></span></p>
                 <p class="mt-2"><strong>Barang yang Dipesan:</strong></p>
                 <ul id="summary-items-list" class="list-disc list-inside ml-4 text-gray-600"></ul>
@@ -227,25 +224,25 @@
         import { getFirestore, collection, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Konfigurasi Aplikasi ---
-        // Objek firebaseConfig di bawah ini akan diperbarui dengan data Anda
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyCT5X--dt2erPxWIhTc2sNKFPctRBNmT9g",
             authDomain: "tirtaprima-a38b5.firebaseapp.com",
             projectId: "tirtaprima-a38b5",
-            storageBucket: "tirtaprima-a38b5.appspot.com", // Sesuai gambar, appspot.com adalah umum
+            storageBucket: "tirtaprima-a38b5.appspot.com", 
             messagingSenderId: "724817167623",
             appId: "1:724817167623:web:718a1a593326b7c8de31a2",
-            measurementId: "G-HX9YQG2WXR" // Ditambahkan dari gambar
+            measurementId: "G-HX9YQG2WXR" 
         };
         const APP_ID_FALLBACK = 'tirta-prima-online'; 
         const appIdentifier = typeof __app_id !== 'undefined' ? __app_id : APP_ID_FALLBACK;
-        const DELIVERY_FEE = 1000; // Biaya antar jemput
+        const DELIVERY_FEE = 0; // Biaya antar jemput dihilangkan (dibuat 0)
 
         // --- Variabel Global Aplikasi ---
         let firebaseApp, firebaseAuth, firestoreDb, currentUserId;
         const productCatalog = [ 
-            { id: "P001", name: "Galon Baru + Isi", price: 60000, image: "https://placehold.co/400x300/3498db/ffffff?text=Galon+Baru" },
-            { id: "P002", name: "Isi Ulang Galon", price: 5500, image: "https://placehold.co/400x300/2ecc71/ffffff?text=Isi+Ulang" } 
+            { id: "P001", name: "Galon Baru (Tanpa Keran) + Isi", price: 50000, image: "https://placehold.co/400x300/3498db/ffffff?text=Galon+Tanpa+Keran" },
+            { id: "P002", name: "Isi Ulang Galon", price: 7000, image: "https://placehold.co/400x300/2ecc71/ffffff?text=Isi+Ulang" },
+            { id: "P003", name: "Galon Baru + Keran + Isi", price: 55000, image: "https://placehold.co/400x300/e74c3c/ffffff?text=Galon+Dengan+Keran" }
         ];
         let shoppingCart = []; 
         let orderDetails = {}; 
@@ -257,8 +254,8 @@
         const productListContainerEl = document.getElementById('product-list-container');
         const productLoadingMessageEl = document.getElementById('product-loading-message');
         const cartItemsContainerEl = document.getElementById('cart-items-container');
-        const cartSubtotalAmountEl = document.getElementById('cart-subtotal-amount'); 
-        const cartDeliveryFeeEl = document.getElementById('cart-delivery-fee'); 
+        // const cartSubtotalAmountEl = document.getElementById('cart-subtotal-amount'); // Dihapus/dikomentari
+        // const cartDeliveryFeeEl = document.getElementById('cart-delivery-fee'); // Dihapus/dikomentari
         const cartGrandTotalAmountEl = document.getElementById('cart-grand-total-amount'); 
         const checkoutBtnEl = document.getElementById('checkout-btn');
         // Sections
@@ -281,8 +278,8 @@
         const summaryCustomerDeliveryAddressEl = document.getElementById('summary-customer-delivery-address'); 
         const summaryCustomerPickupAddressEl = document.getElementById('summary-customer-pickup-address'); 
         const summaryCustomerPhoneEl = document.getElementById('summary-customer-phone');
-        const summarySubtotalAmountEl = document.getElementById('summary-subtotal-amount'); 
-        const summaryDeliveryFeeEl = document.getElementById('summary-delivery-fee'); 
+        // const summarySubtotalAmountEl = document.getElementById('summary-subtotal-amount'); // Dihapus/dikomentari
+        // const summaryDeliveryFeeEl = document.getElementById('summary-delivery-fee'); // Dihapus/dikomentari
         const summaryGrandTotalAmountEl = document.getElementById('summary-grand-total-amount'); 
         const summaryItemsListEl = document.getElementById('summary-items-list');
         // Buttons
@@ -449,12 +446,18 @@
         }
 
         function updateCartDisplay() {
-            if (!cartItemsContainerEl || !cartSubtotalAmountEl || !cartDeliveryFeeEl || !cartGrandTotalAmountEl || !checkoutBtnEl) return;
+            // Hapus referensi ke cartSubtotalAmountEl dan cartDeliveryFeeEl jika elemennya dihapus dari HTML
+            // const cartSubtotalAmountEl = document.getElementById('cart-subtotal-amount'); 
+            // const cartDeliveryFeeEl = document.getElementById('cart-delivery-fee'); 
+            const cartGrandTotalAmountEl = document.getElementById('cart-grand-total-amount'); 
+
+
+            if (!cartItemsContainerEl || !cartGrandTotalAmountEl || !checkoutBtnEl) return;
 
             if (shoppingCart.length === 0) {
                 cartItemsContainerEl.innerHTML = '<p class="text-gray-500">Keranjang Anda masih kosong.</p>';
-                cartSubtotalAmountEl.textContent = '0';
-                cartDeliveryFeeEl.textContent = '0';
+                // if (cartSubtotalAmountEl) cartSubtotalAmountEl.textContent = '0';
+                // if (cartDeliveryFeeEl) cartDeliveryFeeEl.textContent = '0';
                 cartGrandTotalAmountEl.textContent = '0';
                 checkoutBtnEl.disabled = true;
                 return;
@@ -483,11 +486,11 @@
                 }
             });
 
-            const currentDeliveryFee = shoppingCart.length > 0 ? DELIVERY_FEE : 0;
-            const grandTotalAmount = subtotalAmount + currentDeliveryFee;
+            // const currentDeliveryFee = shoppingCart.length > 0 ? DELIVERY_FEE : 0; // DELIVERY_FEE sekarang 0
+            const grandTotalAmount = subtotalAmount + DELIVERY_FEE; // DELIVERY_FEE adalah 0
 
-            cartSubtotalAmountEl.textContent = subtotalAmount.toLocaleString('id-ID');
-            cartDeliveryFeeEl.textContent = currentDeliveryFee.toLocaleString('id-ID');
+            // if (cartSubtotalAmountEl) cartSubtotalAmountEl.textContent = subtotalAmount.toLocaleString('id-ID');
+            // if (cartDeliveryFeeEl) cartDeliveryFeeEl.textContent = DELIVERY_FEE.toLocaleString('id-ID'); // Akan selalu 0
             cartGrandTotalAmountEl.textContent = grandTotalAmount.toLocaleString('id-ID');
             checkoutBtnEl.disabled = false;
 
@@ -520,7 +523,6 @@
                 displayAlert("Mohon lengkapi Nama, Alamat Pengantaran, dan Nomor Telepon.");
                 return;
             }
-            // Ambil grand total dari tampilan keranjang untuk ditampilkan di halaman pembayaran
             paymentTotalDisplayEl.textContent = cartGrandTotalAmountEl.textContent;
             navigateToSection('payment-section');
         });
@@ -536,8 +538,8 @@
                 const product = productCatalog.find(p => p.id === item.productId);
                 return sum + (product ? product.price * item.quantity : 0);
             }, 0);
-            const finalDeliveryFee = shoppingCart.length > 0 ? DELIVERY_FEE : 0;
-            const finalGrandTotal = subtotalFromCart + finalDeliveryFee;
+            // const finalDeliveryFee = shoppingCart.length > 0 ? DELIVERY_FEE : 0; // DELIVERY_FEE adalah 0
+            const finalGrandTotal = subtotalFromCart + DELIVERY_FEE; // DELIVERY_FEE adalah 0
 
 
             const orderToSave = {
@@ -557,8 +559,8 @@
                         itemTotal: product ? (product.price * item.quantity) : 0
                     };
                 }),
-                subtotal: subtotalFromCart, 
-                deliveryFee: finalDeliveryFee, 
+                // subtotal: subtotalFromCart, 
+                // deliveryFee: finalDeliveryFee, 
                 grandTotal: finalGrandTotal, 
                 orderStatus: "Menunggu Pembayaran Diverifikasi", 
                 createdAt: serverTimestamp(), 
@@ -575,8 +577,8 @@
                 summaryCustomerPickupAddressEl.textContent = orderToSave.customerInfo.pickupAddress; 
                 summaryCustomerPhoneEl.textContent = orderToSave.customerInfo.phone;
                 
-                summarySubtotalAmountEl.textContent = orderToSave.subtotal.toLocaleString('id-ID');
-                summaryDeliveryFeeEl.textContent = orderToSave.deliveryFee.toLocaleString('id-ID');
+                // if (summarySubtotalAmountEl) summarySubtotalAmountEl.textContent = orderToSave.subtotal.toLocaleString('id-ID');
+                // if (summaryDeliveryFeeEl) summaryDeliveryFeeEl.textContent = orderToSave.deliveryFee.toLocaleString('id-ID');
                 summaryGrandTotalAmountEl.textContent = orderToSave.grandTotal.toLocaleString('id-ID');
                 
                 summaryItemsListEl.innerHTML = ''; 
