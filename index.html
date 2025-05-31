@@ -227,14 +227,15 @@
         import { getFirestore, collection, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Konfigurasi Aplikasi ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyCT5x--dt2erPxWIhTc2sNKFPctRBNmT9g", 
-            authDomain: "tirtaprima-a38b5.firebaseapp.com",
-            projectId: "tirtaprima-a38b5",
-            storageBucket: "tirtaprima-a38b5.firebasestorage.app",
-            messagingSenderId: "724817167623",
-            appId: "1:724817167623:web:718a1a593326b7c8de31a2"
-        };
+        const firebaseConfig = {
+  apiKey: "AIzaSyCT5x--dt2erPxWIhTc2sNKFPctRBNmT9g",
+  authDomain: "tirtaprima-a38b5.firebaseapp.com",
+  projectId: "tirtaprima-a38b5",
+  storageBucket: "tirtaprima-a38b5.firebasestorage.app",
+  messagingSenderId: "724817167623",
+  appId: "1:724817167623:web:718a1a593326b7c8de31a2",
+  measurementId: "G-HX9YQG2WXR"
+};
         const APP_ID_FALLBACK = 'tirta-prima-online'; 
         const appIdentifier = typeof __app_id !== 'undefined' ? __app_id : APP_ID_FALLBACK;
         const DELIVERY_FEE = 1000; // Biaya antar jemput
